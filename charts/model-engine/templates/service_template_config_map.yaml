@@ -1271,7 +1271,8 @@ data:
                 {{- $env_vars := $service_env | fromYaml }}
                 {{- range $env_var := index $env_vars "env" }}
                 {{- $env_var_name := index $env_var "name" }}
-                {{- if ne $env_var_name "DD_SERVICE" }}
+                {{- /* This container runs the user's image: keep the broker credential out of it. */}}
+                {{- if not (has $env_var_name (list "DD_SERVICE" "REDIS_AUTH_TOKEN")) }}
                 {{- tuple $env_var | toYaml | nindent 16 }}
                 {{- end }}
                 {{- end }}

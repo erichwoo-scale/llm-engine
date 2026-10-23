@@ -66,6 +66,12 @@ def _apply_redis_auth_token(url: str) -> str:
     return f"{scheme}://:{quote(auth_token, safe='')}@{remainder}"
 
 
+def redact_redis_url(url: str) -> str:
+    """Drop the userinfo from a Redis URL so it is safe to log."""
+    scheme, sep, remainder = url.partition("://")
+    return f"{scheme}{sep}{remainder.rpartition('@')[2]}"
+
+
 @dataclass
 class HostedModelInferenceServiceConfig:
     gateway_namespace: str
@@ -148,7 +154,7 @@ class HostedModelInferenceServiceConfig:
                 logger.warning(
                     "Both cache_redis_aws_url and cache_redis_aws_secret_name are set. Using cache_redis_aws_url"
                 )
-            return self.cache_redis_aws_url
+            return _apply_redis_auth_token(self.cache_redis_aws_url)
         elif self.cache_redis_aws_secret_name:
             assert cloud_provider == "aws", "cache_redis_aws_secret_name is only for AWS"
             creds = get_key_file(self.cache_redis_aws_secret_name)
